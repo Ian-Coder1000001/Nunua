@@ -1,5 +1,8 @@
+
+
+
 "use client"
-import React from "react";
+import React, { useState } from "react";
 import { assets, BagIcon, BoxIcon, CartIcon, HomeIcon} from "@/assets/assets";
 import Link from "next/link"
 import { useAppContext } from "@/context/AppContext";
@@ -8,8 +11,31 @@ import { useClerk, UserButton } from "@clerk/nextjs";
 
 const Navbar = () => {
 
-  const { isSeller, router, user } = useAppContext();
-  const {openSignIn} = useClerk()
+  const { isSeller, router, user, products } = useAppContext();
+  const {openSignIn} = useClerk();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchInput, setShowSearchInput] = useState(false);
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      // Filter products by search query and navigate to a search results page
+      const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      
+      // Store filtered products in session storage or use query params
+      sessionStorage.setItem('searchResults', JSON.stringify(filteredProducts));
+      router.push('/search-results');
+    }
+  }
+
+  const scrollToFooter = (e) => {
+    e.preventDefault();
+    const footer = document.querySelector('footer') || document.getElementById('footer');
+    if (footer) {
+      footer.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
 
   return (
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-32 py-3 border-b border-gray-300 text-gray-700">
@@ -26,10 +52,10 @@ const Navbar = () => {
         <Link href="/all-products" className="hover:text-gray-900 transition">
           Shop
         </Link>
-        <Link href="/" className="hover:text-gray-900 transition">
+        <Link href="/" onClick={scrollToFooter} className="hover:text-gray-900 transition">
           About Us
         </Link>
-        <Link href="/" className="hover:text-gray-900 transition">
+        <Link href="/" onClick={scrollToFooter} className="hover:text-gray-900 transition">
           Contact
         </Link>
 
@@ -38,7 +64,31 @@ const Navbar = () => {
       </div>
 
       <ul className="hidden md:flex items-center gap-4 ">
-        <Image className="w-4 h-4" src={assets.search_icon} alt="search icon" />
+        {showSearchInput ? (
+          <div className="flex items-center">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border rounded-l px-2 py-1 text-sm w-40"
+              placeholder="Search products..."
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <button 
+              onClick={handleSearch}
+              className="bg-gray-100 border border-l-0 rounded-r px-2 py-1"
+            >
+              <Image className="w-4 h-4" src={assets.search_icon} alt="search icon" />
+            </button>
+          </div>
+        ) : (
+          <Image 
+            className="w-4 h-4 cursor-pointer" 
+            src={assets.search_icon} 
+            alt="search icon" 
+            onClick={() => setShowSearchInput(true)}
+          />
+        )}
         { 
         user
          ? <>
